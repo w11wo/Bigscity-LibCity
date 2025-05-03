@@ -13,7 +13,7 @@ class TrajLocPredEvaluator(AbstractEvaluator):
     def __init__(self, config):
         self.metrics = config['metrics']  # 评估指标, 是一个 list
         self.config = config
-        self.topk = config['topk']
+        self.topk = [1, 5]
         self.result = {}
         # 兼容全样本评估与负样本评估
         self.evaluate_method = config['evaluate_method']

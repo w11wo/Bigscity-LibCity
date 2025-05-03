@@ -19,8 +19,8 @@ class TrajLocPredExecutor(AbstractExecutor):
             self.metrics = 'Recall@{}'.format(config['topk'][0])
         self.config = config
         self.model = model.to(self.config['device'])
-        self.tmp_path = './libcity/tmp/checkpoint/'
         self.exp_id = self.config.get('exp_id', None)
+        self.tmp_path = f'./libcity/tmp/checkpoint/{self.exp_id}/' 
         self.cache_dir = './libcity/cache/{}/model_cache'.format(self.exp_id)
         self.evaluate_res_dir = './libcity/cache/{}/evaluate_cache'.format(self.exp_id)
         self.loss_func = None  # TODO: 根据配置文件支持选择特定的 Loss Func 目前并未实装
@@ -86,7 +86,7 @@ class TrajLocPredExecutor(AbstractExecutor):
         # save optimizer when load epoch to train
         torch.save((self.model.state_dict(), self.optimizer.state_dict()), cache_name)
 
-    def evaluate(self, test_dataloader):
+    def evaluate(self, test_dataloader, exp_name):
         self.model.train(False)
         self.evaluator.clear()
         for batch in test_dataloader:
@@ -108,7 +108,7 @@ class TrajLocPredExecutor(AbstractExecutor):
                     'loc_pred': scores.tolist()
                 }
             self.evaluator.collect(evaluate_input)
-        self.evaluator.save_result(self.evaluate_res_dir)
+        self.evaluator.save_result(self.evaluate_res_dir, exp_name)
 
     def run(self, data_loader, model, lr, clip):
         model.train(True)

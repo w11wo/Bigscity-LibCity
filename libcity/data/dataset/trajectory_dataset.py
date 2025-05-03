@@ -102,10 +102,10 @@ class TrajectoryDataset(AbstractDataset):
         traj = pd.read_csv(os.path.join(
             self.data_path, '{}.dyna'.format(self.dyna_file)))
         # filter inactive poi
-        group_location = traj.groupby('location').count()
-        filter_location = group_location[group_location['time'] >= self.config['min_checkins']]
-        location_index = filter_location.index.tolist()
-        traj = traj[traj['location'].isin(location_index)]
+        # group_location = traj.groupby('location').count()
+        # filter_location = group_location[group_location['time'] >= self.config['min_checkins']]
+        # location_index = filter_location.index.tolist()
+        # traj = traj[traj['location'].isin(location_index)]
         user_set = pd.unique(traj['entity_id'])
         res = {}
         min_session_len = self.config['min_session_len']
@@ -164,7 +164,7 @@ class TrajectoryDataset(AbstractDataset):
                     sessions.append(session)
                 if len(sessions) >= min_sessions:
                     res[str(uid)] = sessions
-        else:
+        elif cut_method == 'time_window':
             # cut by fix window_len used by STAN
             if max_session_len != window_size:
                 raise ValueError('the fixed length window is not equal to max_session_len')
@@ -183,6 +183,12 @@ class TrajectoryDataset(AbstractDataset):
                     sessions.append(session)
                 if len(sessions) >= min_sessions:
                     res[str(uid)] = sessions
+        else:
+            for uid in tqdm(user_set, desc="cut and filter trajectory"):
+                usr_traj = traj[traj['entity_id'] == uid]
+                sessions = usr_traj.groupby('dyna_id').apply(lambda x: x.values.tolist())
+                sessions = [item for item in sessions]
+                res[str(uid)] = sessions
         return res
 
     def encode_traj(self, data):
